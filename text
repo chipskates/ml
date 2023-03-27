@@ -355,3 +355,244 @@ Deleted testHDFS
 [cloudera@quickstart ~]$ ^C
 [cloudera@quickstart ~]$
 
+Hive Client
+Hive supports applications written in any language like Python, Java, C++, Ruby, etc. using JDBC, ODBC, and Thrift drivers, for performing queries on the Hive. Hence, one can easily write a hive client application in any language of its own choice.
+
+Hive clients are categorized into three types:
+
+1. Thrift Clients
+The Hive server is based on Apache Thrift so that it can serve the request from a thrift client.
+
+2. JDBC client
+Hive allows for the Java applications to connect to it using the JDBC driver. JDBC driver uses Thrift to communicate with the Hive Server.
+
+3. ODBC client
+Hive ODBC driver allows applications based on the ODBC protocol to connect to Hive. Similar to the JDBC driver, the ODBC driver uses Thrift to communicate with the Hive Server.
+Hive Service
+To perform all queries, Hive provides various services like the Hive server2, Beeline, etc. The various services offered by Hive are:
+
+1. Beeline
+The Beeline is a command shell supported by HiveServer2, where the user can submit its queries and command to the system. It is a JDBC client that is based on SQLLINE CLI (pure Java-console-based utility for connecting with relational databases and executing SQL queries).
+
+2. Hive Server 2
+HiveServer2 is the successor of HiveServer1. HiveServer2 enables clients to execute queries against the Hive. It allows multiple clients to submit requests to Hive and retrieve the final results. It is basically designed to provide the best support for open API clients like JDBC and ODBC.
+Note: Hive server1, also called a Thrift server, is built on Apache Thrift protocol to handle the cross-platform communication with Hive. It allows different client applications to submit requests to Hive and retrieve the final results.
+
+It does not handle concurrent requests from more than one client due to which it was replaced by HiveServer2.
+
+3. Hive Driver
+The Hive driver receives the HiveQL statements submitted by the user through the command shell. It creates the session handles for the query and sends the query to the compiler.
+
+4. Hive Compiler
+Hive compiler parses the query. It performs semantic analysis and type-checking on the different query blocks and query expressions by using the metadata stored in metastore and generates an execution plan.
+The execution plan created by the compiler is the DAG(Directed Acyclic Graph), where each stage is a map/reduce job, operation on HDFS, a metadata operation.
+
+5. Optimizer
+Optimizer performs the transformation operations on the execution plan and splits the task to improve efficiency and scalability.
+
+6. Execution Engine
+Execution engine, after the compilation and optimization steps, executes the execution plan created by the compiler in order of their dependencies using Hadoop.
+
+7. Metastore
+Metastore is a central repository that stores the metadata information about the structure of tables and partitions, including column and column type information.
+It also stores information of serializer and deserializer, required for the read/write operation, and HDFS files where data is stored. This metastore is generally a relational database.
+
+Metastore provides a Thrift interface for querying and manipulating Hive metadata.
+
+We can configure metastore in any of the two modes:
+
+Remote: In remote mode, metastore is a Thrift service and is useful for non-Java applications.
+Embedded: In embedded mode, the client can directly interact with the metastore using JDBC.
+8. HCatalog
+HCatalog is the table and storage management layer for Hadoop. It enables users with different data processing tools such as Pig, MapReduce, etc. to easily read and write data on the grid.
+
+It is built on the top of Hive metastore and exposes the tabular data of Hive metastore to other data processing tools.
+WebHCat
+WebHCat is the REST API for HCatalog. It is an HTTP interface to perform Hive metadata operations. It provides a service to the user for running Hadoop MapReduce (or YARN), Pig, Hive jobs.
+Processing Framework and Resource Management
+Hive internally uses a MapReduce framework as a defacto engine for executing the queries.
+
+MapReduce is a software framework for writing those applications that process a massive amount of data in parallel on the large clusters of commodity hardware. MapReduce job works by splitting data into chunks, which are processed by map-reduce tasks.
+Distributed Storage
+Hive is built on top of Hadoop, so it uses the underlying Hadoop Distributed File System for the distributed storage.
+
+Working of Hive
+Step 1: executeQuery: The user interface calls the execute interface to the driver.
+
+Step 2: getPlan: The driver accepts the query, creates a session handle for the query, and passes the query to the compiler for generating the execution plan.
+
+Step 3: getMetaData: The compiler sends the metadata request to the metastore.
+
+Step 4: sendMetaData: The metastore sends the metadata to the compiler.
+
+The compiler uses this metadata for performing type-checking and semantic analysis on the expressions in the query tree. The compiler then generates the execution plan (Directed acyclic Graph). For Map Reduce jobs, the plan contains map operator trees (operator trees which are executed on mapper) and reduce operator tree (operator trees which are executed on reducer).
+
+Step 5: sendPlan: The compiler then sends the generated execution plan to the driver.
+
+Step 6: executePlan: After receiving the execution plan from compiler, driver sends the execution plan to the execution engine for executing the plan.
+Step 7: submit job to MapReduce: The execution engine then sends these stages of DAG to appropriate components.
+
+For each task, either mapper or reducer, the deserializer associated with a table or intermediate output is used in order to read the rows from HDFS files. These are then passed through the associated operator tree.
+
+Once the output gets generated, it is then written to the HDFS temporary file through the serializer. These temporary HDFS files are then used to provide data to the subsequent map/reduce stages of the plan.
+
+For DML operations, the final temporary file is then moved to the table’s location.
+
+Step 8,9,10: sendResult: Now for queries, the execution engine reads the contents of the temporary files directly from HDFS as part of a fetch call from the driver. The driver then sends results to the Hive interface.
+In short, we can summarize the Hive Architecture tutorial by saying that Apache Hive is an open-source data warehousing tool. The major components of Apache Hive are the Hive clients, Hive services, Processing framework and Resource Management, and the Distributed Storage.
+
+The user interacts with the Hive through the user interface by submitting Hive queries.
+
+The driver passes the Hive query to the compiler. The compiler generates the execution plan. The Execution engine executes the plan.
+Apache Spark is a data processing framework that can quickly perform processing tasks on very large data sets, and can also distribute data processing tasks across multiple computers, either on its own or in tandem with other distributed computing tools. These two qualities are key to the worlds of big data and machine learning, which require the marshalling of massive computing power to crunch through large data stores. Spark also takes some of the programming burdens of these tasks off the shoulders of developers with an easy-to-use API that abstracts away much of the grunt work of distributed computing and big data processing.
+
+From its humble beginnings in the AMPLab at U.C. Berkeley in 2009, Apache Spark has become one of the key big data distributed processing frameworks in the world. Spark can be deployed in a variety of ways, provides native bindings for the Java, Scala, Python, and R programming languages, and supports SQL, streaming data, machine learning, and graph processing. You’ll find it used by banks, telecommunications companies, games companies, governments, and all of the major tech giants such as Apple, Facebook, IBM, and Microsoft.
+
+Apache Spark architecture
+At a fundamental level, an Apache Spark application consists of two main components: a driver, which converts the user's code into multiple tasks that can be distributed across worker nodes, and executors, which run on those nodes and execute the tasks assigned to them. Some form of cluster manager is necessary to mediate between the two.
+
+Out of the box, Spark can run in a standalone cluster mode that simply requires the Apache Spark framework and a JVM on each machine in your cluster. However, it’s more likely you’ll want to take advantage of a more robust resource or cluster management system to take care of allocating workers on demand for you. In the enterprise, this will normally mean running on Hadoop YARN (this is how the Cloudera and Hortonworks distributions run Spark jobs), but Apache Spark can also run on Apache Mesos, Kubernetes, and Docker Swarm.
+
+If you seek a managed solution, then Apache Spark can be found as part of Amazon EMR, Google Cloud Dataproc, and Microsoft Azure HDInsight. Databricks, the company that employs the founders of Apache Spark, also offers the Databricks Unified Analytics Platform, which is a comprehensive managed service that offers Apache Spark clusters, streaming support, integrated web-based notebook development, and optimized cloud I/O performance over a standard Apache Spark distribution.
+Apache Spark builds the user’s data processing commands into a Directed Acyclic Graph, or DAG. The DAG is Apache Spark’s scheduling layer; it determines what tasks are executed on what nodes and in what sequence.  
+
+Spark vs. Hadoop: Why use Apache Spark?
+It’s worth pointing out that Apache Spark vs. Apache Hadoop is a bit of a misnomer. You’ll find Spark included in most Hadoop distributions these days. But due to two big advantages, Spark has become the framework of choice when processing big data, overtaking the old MapReduce paradigm that brought Hadoop to prominence.
+
+The first advantage is speed. Spark’s in-memory data engine means that it can perform tasks up to one hundred times faster than MapReduce in certain situations, particularly when compared with multi-stage jobs that require the writing of state back out to disk between stages. In essence, MapReduce creates a two-stage execution graph consisting of data mapping and reducing, whereas Apache Spark’s DAG has multiple stages that can be distributed more efficiently. Even Apache Spark jobs where the data cannot be completely contained within memory tend to be around 10 times faster than their MapReduce counterpart.
+
+The second advantage is the developer-friendly Spark API. As important as Spark’s speedup is, one could argue that the friendliness of the Spark API is even more important
+
+
+GEEKSFORGEEKS
+Difference Between Hadoop and Spark
+Apache Hadoop is a platform that got its start as a Yahoo project in 2006, which became a top-level Apache open-source project afterward. This framework handles large datasets in a distributed fashion. The Hadoop ecosystem is highly fault-tolerant and does not depend upon hardware to achieve high availability. This framework is designed with a vision to look for the failures at the application layer. It’s a general-purpose form of distributed processing that has several components: 
+
+Hadoop Distributed File System (HDFS): This stores files in a Hadoop-native format and parallelizes them across a cluster. It manages the storage of large sets of data across a Hadoop Cluster. Hadoop can handle both structured and unstructured data. 
+YARN: YARN is Yet Another Resource Negotiator. It is a schedule that coordinates application runtimes. 
+MapReduce: It is the algorithm that actually processes the data in parallel to combine the pieces into the desired result. 
+Hadoop Common: It is also known as Hadoop Core and it provides support to all  other components it has a set of common libraries and utilities that all other modules depend on.
+Hadoop is built in Java, and accessible through many programming languages, for writing MapReduce code, including Python, through a Thrift client.  It’s available either open-source through the Apache distribution, or through vendors such as Cloudera (the largest Hadoop vendor by size and scope), MapR, or HortonWorks. 
+
+Advantages and Disadvantages of Hadoop –
+Advantage of Hadoop:
+1. Cost effective. 
+
+2. Processing operation is done at a faster speed.
+
+3. Best to be applied when a company is having a data diversity to be processed.
+
+4. Creates multiple copies.
+
+5. Saves time and can derive data from any form of data.
+
+
+
+Disadvantage of Hadoop:
+1. Can’t perform in small data environments
+
+2. Built entirely on java
+
+3. Lack of preventive measures
+
+4. Potential stability issues
+
+ 5. Not fit for small data
+
+What is Spark?
+Apache Spark is an open-source tool. It is a newer project, initially developed in 2012, at the AMPLab at UC Berkeley. It is focused on processing data in parallel across a cluster, but the biggest difference is that it works in memory. It is designed to use RAM for caching and processing the data. Spark performs different types of big data workloads like:
+
+
+
+Batch processing.
+Real-time stream processing. 
+Machine learning.
+Graph computation.
+Interactive queries. 
+There are five main components of Apache Spark:
+
+Apache Spark Core: It is responsible for functions like scheduling, input and output operations, task dispatching, etc.
+Spark SQL: This is used to gather information about structured data and how the data is processed.
+Spark Streaming: This component enables the processing of live data streams. 
+Machine Learning Library: The goal of this component is scalability and to make machine learning more accessible.
+GraphX: This has a set of APIs that are used for facilitating graph analytics tasks.
+Advantages and Disadvantages of Spark-
+Advantage of Spark:
+Perfect for interactive processing, iterative processing and event steam processing
+Flexible and powerful
+Supports for sophisticated analytics
+Executes batch processing jobs faster than MapReduce
+Run on Hadoop alongside other tools in the Hadoop ecosystem
+Disadvantage of Spark:
+Consumes a lot of memory
+ Issues with small file
+Less number of algorithms
+ Higher latency compared to Apache fling
+Hadoop vs Spark
+This section list the differences between Hadoop and Spark. The differences will be listed on the basis of some of the parameters like performance, cost, machine learning algorithm, etc. 
+
+Hadoop reads and writes files to HDFS, Spark processes data in RAM using a concept known as an RDD, Resilient Distributed Dataset. 
+Spark can run either in stand-alone mode, with a Hadoop cluster serving as the data source, or in conjunction with Mesos. In the latter scenario, the Mesos master replaces the Spark master or YARN for scheduling purposes. 
+Spark is structured around Spark Core, the engine that drives the scheduling, optimizations, and RDD abstraction, as well as connects Spark to the correct filesystem (HDFS, S3, RDBMS, or Elasticsearch). There are several libraries that operate on top of Spark Core, including Spark SQL, which allows you to run SQL-like commands on distributed data sets, MLLib for machine learning, GraphX for graph problems, and streaming which allows for the input of continually streaming log data. 
+Below is a table of differences between Hadoop and Spark:
+
+Basis
+
+Hadoop
+
+Spark
+
+Processing Speed & Performance	Hadoop’s MapReduce model reads and writes from a disk, thus slowing down the processing speed.	Spark reduces the number of read/write cycles to disk and stores intermediate data in memory, hence faster-processing speed.
+Usage	Hadoop is designed to handle batch processing efficiently.	Spark is designed to handle real-time data efficiently.
+Latency	Hadoop is a high latency computing framework, which does not have an interactive mode.	Spark is a low latency computing and can process data interactively.
+Data 	With Hadoop MapReduce, a developer can only process data in batch mode only.	Spark can process real-time data, from real-time events like Twitter, and Facebook.
+Cost	Hadoop is a cheaper option available while comparing it in terms of cost	Spark requires a lot of RAM to run in-memory, thus increasing the cluster and hence cost.
+Algorithm Used	 The PageRank algorithm is used in Hadoop.	Graph computation library called GraphX is used by Spark.
+Fault Tolerance	Hadoop is a highly fault-tolerant system where Fault-tolerance achieved by replicating blocks of data. 
+If a node goes down, the data can be found on another node	Fault-tolerance achieved by storing chain of transformations
+If data is lost, the chain of transformations can be recomputed on the original data
+Security	Hadoop supports LDAP, ACLs, SLAs, etc and hence it is extremely secure.	Spark is not secure, it relies on the integration with Hadoop to achieve the necessary security level. 
+Machine Learning	Data fragments in Hadoop can be too large and can create bottlenecks. Thus, it is slower than Spark.	Spark is much faster as it uses MLib for computations and has in-memory processing.
+Scalability	Hadoop is easily scalable by adding nodes and disk for storage. It supports tens of thousands of nodes.	It is quite difficult to scale as it relies on RAM for computations. It supports thousands of nodes in a cluster. 
+Language support	It uses Java or Python for MapReduce apps.	It uses Java, R, Scala, Python, or Spark SQL for the APIs.
+User-friendliness	It is more difficult to use. 	It is more user-friendly.
+Resource Management	YARN is the most common option for resource management.	It has built-in tools for resource management
+
+ 
+GEEKSFORGEEKS
+What is a Columnar Database?
+A columnar database is used in a database management system (DBMS)  which helps to store data in columns rather than rows. It is responsible for speeding up the time required to return a particular query. It also is responsible for greatly improving the disk I/O performance. It is helpful in data analytics and data warehousing. also the major motive of Columnar Database is to effectively read and write data. Here are some examples for Columnar Database like Monet DB, Apache Cassandra, SAP Hana, Amazon Redshift.
+
+Columnar Database VS Row Database:
+Both Columnar and Row databases are a few methods used for processing big data analytics and data warehousing. But their approach is different from each other. 
+
+For example:
+
+Row Database: “Customer 1: Name, Address, Location.”(The fields for each new record are stored in a long row).
+Columnar Database: “Customer 1: Name, Address, Location.”(Each field has its own set of columns).
+Example:
+
+Here is an example of a simple database table with four columns and three rows.
+
+ID Number	Last Name	First Name	Bonus
+534782	Miller	Ginny	6000
+585523	Parker	Peter	8000
+479148	Stacy	Gwen	2000
+In a Columnar DBMS, the data stored is in this format:
+
+534782, 585523, 479148; Miller, Parker, Stacy; Ginny, Peter, Gwen; 6000, 8000, 2000.
+In a Row-oriented DBMS, the data stored is in this format:
+
+534782, Miller, Ginny, 6000; 585523, Parker, Peter, 8000; 479148, Stacy, Gwen, 2000.
+When to use the Columnar Database:
+Queries that involve only a few columns.
+Compression but column-wise only.
+Clustering queries against a huge amount of data.
+Advantages of Columnar Database:
+Columnar databases can be used for different tasks such as when the applications that are related to big data comes into play then the column-oriented databases have greater attention in such case.
+The data in the columnar database has a highly compressible nature and has different operations like (AVG), (MIN, MAX), which are permitted by the compression.
+Efficiency and Speed: The speed of Analytical queries that are performed is faster in columnar databases.
+Self-indexing: Another benefit of a column-based DBMS is self-indexing, which uses less disk space than a relational database management system containing the same data.
+Limitation of Columnar Database:
+For loading incremental data, traditional databases are more relevant as compared to column-oriented databases.
+For Online transaction processing (OLTP) applications, Row oriented databases are more appropriate than columnar databases.
